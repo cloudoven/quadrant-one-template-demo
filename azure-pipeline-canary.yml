@@ -1,0 +1,76 @@
+trigger:
+  - main
+
+resources:
+  repositories:
+    - repository: Platform-Engineering   # 👈 alias (must match @Platform-Engineering)
+      type: git
+      name: Platform-Engineering/Platform-Engineering
+      ref: refs/heads/main   # or a tag, strongly recommended
+
+variables:
+  containerAppRevisionSuffix: canary-$(Build.BuildId)
+  containerAppSubscriptionId: c5b22afb-96db-4354-99a4-5f808d5221c6
+  containerAppResourceGroup: Quadrant
+  containerAppName: canary-api-demo
+
+extends:
+  template: templates/container-workloads/container-pipeline-base.yml@Platform-Engineering
+  parameters:
+    productName: Quadrant
+    imageName: moimhossain/canary-api:$(Build.SourceVersion)
+    deployEnvironmentName: quadrant-dev
+    buildStepsTemplate: templates/build/build.yml@self
+    buildStepsParameters:
+      dockerRepository: moimhossain/canary-api
+      imageTag: $(Build.SourceVersion)
+      dotnetProject: src/BlueGreenFeature.csproj
+      dockerfilePath: src/Dockerfile
+      buildContext: $(Build.SourcesDirectory)/src
+      dockerServiceConnection: DockerHub
+    containerDeploymentStrategy: Canary
+    canaryStrategyMode: Orchestrated
+    deployStepsTemplate: templates/canary/deploy.yml@self
+    canaryIncrements:
+      CanaryStep_0: 20
+      CanaryStep_1: 50
+      CanaryStep_2: 80
+    canaryStabilizationSeconds: 10
+    canaryPreDeployStepsTemplate: templates/canary/predeploy.yml@self
+    canaryPreDeployStepsParameters:
+      subscriptionId: $(containerAppSubscriptionId)
+      resourceGroup: $(containerAppResourceGroup)
+      containerAppName: $(containerAppName)
+      canaryRevisionSuffix: $(containerAppRevisionSuffix)
+    canaryRouteTrafficStepsTemplate: templates/canary/route-traffic.yml@self
+    canaryRouteTrafficStepsParameters:
+      subscriptionId: $(containerAppSubscriptionId)
+      resourceGroup: $(containerAppResourceGroup)
+      containerAppName: $(containerAppName)
+      revisionSuffix: $(containerAppRevisionSuffix)
+    canaryPostRouteTrafficStepsTemplate: templates/canary/post-route.yml@self
+    canarySuccessStepsTemplate: templates/canary/success.yml@self
+    canarySuccessStepsParameters:
+      subscriptionId: $(containerAppSubscriptionId)
+      resourceGroup: $(containerAppResourceGroup)
+      containerAppName: $(containerAppName)
+    canaryFailureStepsTemplate: templates/canary/failure.yml@self
+    canaryFailureStepsParameters:
+      subscriptionId: $(containerAppSubscriptionId)
+      resourceGroup: $(containerAppResourceGroup)
+      containerAppName: $(containerAppName)
+    canaryHealthCheckStepsTemplate: templates/canary/health-check.yml@self
+    canaryHealthCheckStepsParameters:
+      subscriptionId: $(containerAppSubscriptionId)
+      resourceGroup: $(containerAppResourceGroup)
+      containerAppName: $(containerAppName)
+      revisionSuffix: $(containerAppRevisionSuffix)
+      healthEndpoint: /api/health
+    deployStepsParameters:
+      platformDeployTemplate: /templates/canary/aca-deploy.yml@self
+      platformDeployParameters:
+        subscriptionId: $(containerAppSubscriptionId)
+        resourceGroup: $(containerAppResourceGroup)
+        containerAppName: $(containerAppName)
+        revisionSuffix: $(containerAppRevisionSuffix)
+

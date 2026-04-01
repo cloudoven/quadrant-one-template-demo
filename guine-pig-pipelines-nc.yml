@@ -1,0 +1,81 @@
+trigger:
+- main
+
+pool:
+  vmImage: windows-latest
+
+stages:
+- stage: StageOne
+  displayName: "Stage One"
+  jobs:
+  - job: JobOneA
+    displayName: "Job One A"
+    steps:
+    - task: PowerShell@2
+      displayName: "PS Step 1"
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Hello World from Stage One - Job One A - Step 1"
+
+    - task: PowerShell@2
+      displayName: "PS Step 2"
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Hello World from Stage One - Job One A - Step 2"
+
+  - job: JobOneB
+    displayName: "Job One B"
+    steps:
+    - task: PowerShell@2
+      displayName: "PS Step 1"
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Hello World from Stage One - Job One B - Step 1"
+
+    - task: PowerShell@2
+      displayName: "PS Step 2"
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Hello World from Stage One - Job One B - Step 2"
+
+- stage: StageTwo
+  displayName: "Stage Two"
+  dependsOn: StageOne
+  jobs:
+  - job: JobTwoA
+    displayName: "Job Two A"
+    steps:
+    - task: PowerShell@2
+      displayName: "PS Step 1"
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Hello World from Stage Two - Job Two A - Step 1"
+
+    - task: PowerShell@2
+      displayName: "PS Step 2"
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Hello World from Stage Two - Job Two A - Step 2"
+
+  - job: JobTwoB
+    displayName: "Job Two B"
+    steps:
+    - task: PowerShell@2
+      displayName: "PS Step 1"
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Hello World from Stage Two - Job Two B - Step 1"
+
+    - task: PowerShell@2
+      displayName: "PS Step 2"
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Hello World from Stage Two - Job Two B - Step 2"

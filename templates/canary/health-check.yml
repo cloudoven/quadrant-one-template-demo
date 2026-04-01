@@ -1,0 +1,72 @@
+parameters:
+  - name: productName
+    type: string
+  - name: deployEnvironmentName
+    type: string
+  - name: stage
+    type: string
+    default: healthCheck
+  - name: incrementPercent
+    type: number
+    default: 0
+  - name: subscriptionId
+    type: string
+  - name: resourceGroup
+    type: string
+  - name: containerAppName
+    type: string
+  - name: revisionSuffix
+    type: string
+  - name: healthEndpoint
+    type: string
+    default: /api/health
+
+steps:
+  - checkout: self
+    displayName: "Quadrant 🔁 fetch deployment scripts"
+
+  - task: AzureCLI@2
+    displayName: "Quadrant 🔁 ACA health check"
+    inputs:
+      azureSubscription: ServicePrincipalForAzDO
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+
+        az account set --subscription "$ACA_SUBSCRIPTION_ID"
+
+        revision_name="${ACA_CONTAINER_APP}--${ACA_REVISION_SUFFIX}"
+        fqdn=$(az containerapp revision show \
+          --name "$ACA_CONTAINER_APP" \
+          --resource-group "$ACA_RESOURCE_GROUP" \
+          --revision "$revision_name" \
+          --query "properties.fqdn" \
+          -o tsv)
+
+        if [[ -z "$fqdn" ]]; then
+          echo "##vso[task.logissue type=error]Unable to determine FQDN for ${revision_name}"
+          exit 1
+        fi
+
+        url="https://${fqdn}${ACA_HEALTH_ENDPOINT}"
+        echo "[Quadrant] Probing ${url} (traffic ${INCREMENT_PERCENT}%)"
+        response=$(curl -fsS "$url")
+        echo "Health response: $response"
+
+        export HEALTH_RESPONSE="$response"
+        healthy=$(python -c 'import json, os; print(str(json.loads(os.environ["HEALTH_RESPONSE"]).get("healthy", False)).lower())')
+
+        if [[ "$healthy" != "true" ]]; then
+          echo "##vso[task.logissue type=error]Health probe reported unhealthy"
+          exit 1
+        fi
+
+        echo "Revision ${revision_name} reported healthy"
+    env:
+      ACA_SUBSCRIPTION_ID: ${{ parameters.subscriptionId }}
+      ACA_RESOURCE_GROUP: ${{ parameters.resourceGroup }}
+      ACA_CONTAINER_APP: ${{ parameters.containerAppName }}
+      ACA_REVISION_SUFFIX: ${{ parameters.revisionSuffix }}
+      ACA_HEALTH_ENDPOINT: ${{ parameters.healthEndpoint }}
+      INCREMENT_PERCENT: ${{ parameters.incrementPercent }}

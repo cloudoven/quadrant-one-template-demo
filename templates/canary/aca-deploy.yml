@@ -1,0 +1,55 @@
+parameters:
+  - name: productName
+    type: string
+  - name: deployEnvironmentName
+    type: string
+  - name: stage
+    type: string
+    default: deploy
+  - name: incrementPercent
+    type: number
+    default: 0
+  - name: imageName
+    type: string
+  - name: rolloutComment
+    type: string
+    default: ""
+  - name: subscriptionId
+    type: string
+  - name: resourceGroup
+    type: string
+  - name: containerAppName
+    type: string
+  - name: revisionSuffix
+    type: string
+
+steps:
+  - checkout: self
+    displayName: "Quadrant 🔁 fetch deployment scripts"
+
+  - task: AzureCLI@2
+    displayName: "Quadrant 🔁 ensure Azure Container Apps revision"
+    inputs:
+      azureSubscription: ServicePrincipalForAzDO
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+
+        az account set --subscription "$ACA_SUBSCRIPTION_ID"
+        canary_suffix="${ACA_REVISION_SUFFIX:-}"
+
+        echo "[Quadrant] Deploying revision ${ACA_CONTAINER_APP}--${canary_suffix} for ${PRODUCT_NAME}"
+        az containerapp update \
+          --name "$ACA_CONTAINER_APP" \
+          --resource-group "$ACA_RESOURCE_GROUP" \
+          --image "$ACA_IMAGE_NAME" \
+          --revision-suffix "$canary_suffix" \
+          >/dev/null
+    env:
+      ACA_SUBSCRIPTION_ID: ${{ parameters.subscriptionId }}
+      ACA_RESOURCE_GROUP: ${{ parameters.resourceGroup }}
+      ACA_CONTAINER_APP: ${{ parameters.containerAppName }}
+      ACA_REVISION_SUFFIX: ${{ parameters.revisionSuffix }}
+      ACA_IMAGE_NAME: ${{ parameters.imageName }}
+      PRODUCT_NAME: ${{ parameters.productName }}

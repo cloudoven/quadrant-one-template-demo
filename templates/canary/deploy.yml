@@ -1,0 +1,62 @@
+parameters:
+  - name: productName
+    type: string
+  - name: deployEnvironmentName
+    type: string
+  - name: stage
+    type: string
+    default: deploy
+  - name: incrementPercent
+    type: number
+    default: 0
+  - name: imageName
+    type: string
+  - name: kubernetesManifestPath
+    type: string
+    default: ""
+  - name: kubernetesNamespace
+    type: string
+    default: ""
+  - name: rolloutComment
+    type: string
+    default: ""
+  - name: platformDeployTemplate
+    type: string
+    default: ""
+  - name: platformDeployParameters
+    type: object
+    default: {}
+
+steps:
+  - script: |
+      echo "[Quadrant] Deploying ${{ parameters.productName }} container update"
+      echo "Environment: ${{ parameters.deployEnvironmentName }}"
+      echo "Increment: ${{ parameters.incrementPercent }}%"
+      echo "Comment: ${{ parameters.rolloutComment }}"
+    displayName: "Quadrant – deploy ${{ parameters.incrementPercent }}%"
+
+  - ${{ if ne(parameters.platformDeployTemplate, '') }}:
+    - template: ${{ parameters.platformDeployTemplate }}
+      parameters:
+        productName: ${{ parameters.productName }}
+        deployEnvironmentName: ${{ parameters.deployEnvironmentName }}
+        stage: ${{ parameters.stage }}
+        incrementPercent: ${{ parameters.incrementPercent }}
+        imageName: ${{ parameters.imageName }}
+        rolloutComment: ${{ parameters.rolloutComment }}
+        ${{ each pair in parameters.platformDeployParameters }}:
+          ${{ pair.key }}: ${{ pair.value }}
+
+  - ${{ if and(eq(parameters.platformDeployTemplate, ''), ne(parameters.kubernetesManifestPath, ''), ne(parameters.kubernetesNamespace, '')) }}:
+    - template: templates/container-workloads/container-app-simple-deploy-steps.yml@Platform-Engineering
+      parameters:
+        imageName: ${{ parameters.imageName }}
+        kubernetesManifestPath: ${{ parameters.kubernetesManifestPath }}
+        kubernetesNamespace: ${{ parameters.kubernetesNamespace }}
+        rolloutComment: ${{ parameters.rolloutComment }}
+
+  - ${{ if and(eq(parameters.platformDeployTemplate, ''), or(eq(parameters.kubernetesManifestPath, ''), eq(parameters.kubernetesNamespace, ''))) }}:
+    - script: |
+        echo "##vso[task.logissue type=error]Provide either kubernetesManifestPath/kubernetesNamespace or platformDeployTemplate"
+        exit 1
+      displayName: "Quadrant – missing platform deploy configuration"

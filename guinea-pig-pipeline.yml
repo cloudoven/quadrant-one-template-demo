@@ -1,0 +1,45 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: StageOne
+  displayName: "Stage One"
+  jobs:
+  - job: JobOneA
+    displayName: "Job One A"
+    steps:
+    - bash: echo "Hello World from Stage One - Job One A - Step 1"
+      displayName: "Say hello 1"
+    - bash: echo "Hello World from Stage One - Job One A - Step 2"
+      displayName: "Say hello 2"
+
+  - job: JobOneB
+    displayName: "Job One B"
+    steps:
+    - bash: echo "Hello World from Stage One - Job One B - Step 1"
+      displayName: "Say hello 1"
+    - bash: echo "Hello World from Stage One - Job One B - Step 2"
+      displayName: "Say hello 2"
+
+- stage: StageTwo
+  displayName: "Stage Two"
+  dependsOn: StageOne
+  jobs:
+  - job: JobTwoA
+    displayName: "Job Two A"
+    steps:
+    - bash: echo "Hello World from Stage Two - Job Two A - Step 1"
+      displayName: "Say hello 1"
+    - bash: echo "Hello World from Stage Two - Job Two A - Step 2"
+      displayName: "Say hello 2"
+
+  - job: JobTwoB
+    displayName: "Job Two B"
+    steps:
+    - bash: echo "Hello World from Stage Two - Job Two B - Step 1"
+      displayName: "Say hello 1"
+    - bash: echo "Hello World from Stage Two - Job Two B - Step 2"
+      displayName: "Say hello 2"
