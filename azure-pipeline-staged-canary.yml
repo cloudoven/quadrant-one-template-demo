@@ -4,9 +4,10 @@ trigger:
 resources:
   repositories:
     - repository: OneTemplates  # 👈 alias (must match @Platform-Engineering)
-      type: git
-      name: Platform-Engineering/OneTemplates
-      ref: refs/tags/Container-Canary-v1.0.7   # refs/heads/main or a tag, strongly recommended
+      type: github
+      name: cloudoven/platform-engineering-one-template
+      ref: refs/tags/CotainerApp-Canary-v1.0.0   # refs/heads/main or a tag, strongly recommended
+      endpoint: cloudoven  # 👈 GitHub service connection name in your AzDO project
 
 variables:
   containerAppRevisionSuffix: canary-$(Build.BuildId)
