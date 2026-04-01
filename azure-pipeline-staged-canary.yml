@@ -3,7 +3,7 @@ trigger:
 
 resources:
   repositories:
-    - repository: OneTemplates  # 👈 alias (must match @Platform-Engineering)
+    - repository: OneTemplates  # 👈 alias 
       type: github
       name: cloudoven/platform-engineering-one-template
       ref: refs/tags/CotainerApp-Canary-v1.0.0   # refs/heads/main or a tag, strongly recommended
