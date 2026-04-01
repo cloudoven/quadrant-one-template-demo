@@ -20,7 +20,7 @@ extends:
   parameters:
     productName: Quadrant
     imageName: moimhossain/canary-api:$(Build.SourceVersion)
-    deployEnvironmentName: quadrant-dev
+    deployEnvironmentName: GH-CLOUDOVEN-QUANDRANT-PROD
     buildStepsTemplate: templates/build/build.yml@self
     buildStepsParameters:
       dockerRepository: moimhossain/canary-api
